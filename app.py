@@ -1,29 +1,57 @@
 import streamlit as st
 import PyPDF2
 import re
-import nltk
 from collections import Counter
 import io
 from datetime import datetime
 import pandas as pd
 
-# Download required NLTK data
+# Try to import and setup NLTK, but provide fallbacks if it fails
+NLTK_AVAILABLE = False
 try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
+    import nltk
+    # Download required NLTK data with error handling
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        try:
+            nltk.download('punkt', quiet=True)
+        except:
+            pass
+    
+    try:
+        nltk.data.find('tokenizers/punkt_tab')
+    except LookupError:
+        try:
+            nltk.download('punkt_tab', quiet=True)
+        except:
+            pass
 
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
-
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize, sent_tokenize
+    try:
+        nltk.data.find('corpora/stopwords')
+    except LookupError:
+        try:
+            nltk.download('stopwords', quiet=True)
+        except:
+            pass
+    
+    from nltk.corpus import stopwords
+    from nltk.tokenize import word_tokenize, sent_tokenize
+    NLTK_AVAILABLE = True
+except Exception as e:
+    st.warning("NLTK not fully available, using basic text processing")
+    NLTK_AVAILABLE = False
 
 class ResumeAnalyzer:
     def __init__(self):
-        self.stop_words = set(stopwords.words('english'))
+        # Set up stop words with fallback
+        if NLTK_AVAILABLE:
+            try:
+                self.stop_words = set(stopwords.words('english'))
+            except:
+                self.stop_words = set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should'])
+        else:
+            self.stop_words = set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should'])
         self.action_verbs = {
             'achieved', 'analyzed', 'built', 'created', 'designed', 'developed', 
             'enhanced', 'established', 'executed', 'generated', 'implemented', 
@@ -107,9 +135,23 @@ class ResumeAnalyzer:
                 
         return score, feedback
 
+    def simple_word_tokenize(self, text):
+        """Simple word tokenization fallback when NLTK is not available"""
+        # Remove punctuation and split on whitespace
+        import string
+        text = text.translate(str.maketrans('', '', string.punctuation))
+        return text.lower().split()
+
     def analyze_action_verbs(self, text):
         """Analyze use of strong action verbs"""
-        words = word_tokenize(text.lower())
+        if NLTK_AVAILABLE:
+            try:
+                words = word_tokenize(text.lower())
+            except:
+                words = self.simple_word_tokenize(text)
+        else:
+            words = self.simple_word_tokenize(text)
+            
         found_verbs = [word for word in words if word in self.action_verbs]
         unique_verbs = set(found_verbs)
         
