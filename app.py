@@ -1,77 +1,4 @@
-# Export results with cyber styling
-                if st.button("🚀 DOWNLOAD COMPLETE ANALYSIS", use_container_width=True):
-                    report = f"""
-=== AI RESUME ANALYSIS REPORT ===
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-AI System: Neural Resume Analyzer v2.0
-
-OVERALL PERFORMANCE: {overall_score:.0f}/100
-
-PERFORMANCE MATRIX:
-{chr(10).join([f"• {cat}: {score:.0f}/100" for cat, score in scores.items()])}
-
-AI RECOMMENDATIONS:
-{chr(10).join([f"• {rec}" for rec in recommendations])}
-
-DETAILED ANALYSIS:
-{chr(10).join([f"{chr(10)}{cat.upper()}:{chr(10)}{chr(10).join([f"  - {item}" for item in feedback])}{chr(10)}" for cat, feedback in categories_feedback])}
-
---- END REPORT ---
-                    """
-                    
-                    st.download_button(
-                        label="⬇️ Download Report",
-                        data=report,
-                        file_name=f"AI_Resume_Analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                        mime="text/plain",
-                        use_container_width=True
-                    )
-            else:
-                st.error("❌ Could not extract text from the PDF. Please ensure the file is not corrupted.")
-    
-    else:
-        # Landing page with cyber effects
-        st.markdown("""
-        <div class="upload-zone">
-            <h2 style="color: #00ffff; font-family: 'Orbitron', monospace; text-align: center; margin-bottom: 1rem;">
-                🎯 DRAG & DROP YOUR RESUME
-            </h2>
-            <p style="color: #ffffff; font-family: 'Rajdhani', sans-serif; font-size: 1.2rem; text-align: center;">
-                AI-powered analysis • Instant feedback • Career optimization
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Demo visualization
-        st.markdown("""
-        <div class="tech-panel">
-            <h2 style="color: #ff6b6b; font-family: 'Orbitron', monospace; text-align: center; margin-bottom: 1.5rem;">
-                📊 DEMO ANALYSIS PREVIEW
-            </h2>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        sample_scores = {
-            'Contact Information': 85,
-            'Sections': 90,
-            'Action Verbs': 70,
-            'Quantifiable Results': 60,
-            'Skills': 80,
-            'Format & Length': 85
-        }
-        
-        sample_df = pd.DataFrame(list(sample_scores.items()), columns=['Category', 'Score'])
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown('<div class="cyber-border">', unsafe_allow_html=True)
-            st.bar_chart(sample_df.set_index('Category'))
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown('<div class="tech-panel">', unsafe_allow_html=True)
-            st.markdown("""
-            <p style="color: #4ecdc4; font-family: 'Rajdhani', sans-serif; font-size: import streamlit as st
+import streamlit as st
 import PyPDF2
 import re
 from collections import Counter
@@ -125,6 +52,7 @@ class ResumeAnalyzer:
                 self.stop_words = set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should'])
         else:
             self.stop_words = set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should'])
+        
         self.action_verbs = {
             'achieved', 'analyzed', 'built', 'created', 'designed', 'developed', 
             'enhanced', 'established', 'executed', 'generated', 'implemented', 
