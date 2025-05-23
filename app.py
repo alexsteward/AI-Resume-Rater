@@ -1237,29 +1237,29 @@ def show_support():
 
 # Import/Export functionality
 def show_import_export():
-    st.sidebar.markdown("### 🔄 Import/Export")
+    st.sidebar.markdown("### Import/Export")
     
     # Export current data
-    if st.sidebar.button("📤 Export Data"):
+    if st.sidebar.button("Export Data"):
         resume_json = json.dumps(st.session_state.resume_data, indent=2)
         st.sidebar.download_button(
-            label="💾 Download JSON",
+            label="Download JSON",
             data=resume_json,
             file_name="resume_data.json",
             mime="application/json"
         )
     
     # Import data
-    uploaded_json = st.sidebar.file_uploader("📥 Import Resume Data", type=['json'])
+    uploaded_json = st.sidebar.file_uploader("Import Resume Data", type=['json'])
     if uploaded_json:
         try:
             imported_data = json.load(uploaded_json)
-            if st.sidebar.button("🔄 Load Imported Data"):
+            if st.sidebar.button("Load Imported Data"):
                 st.session_state.resume_data = imported_data
-                st.sidebar.success("✅ Data imported successfully!")
+                st.sidebar.success("Data imported successfully!")
                 st.rerun()
         except json.JSONDecodeError:
-            st.sidebar.error("❌ Invalid JSON file")
+            st.sidebar.error("Invalid JSON file")
 
 # Add some utility functions
 def calculate_resume_score():
