@@ -10,7 +10,6 @@ import pandas as pd
 NLTK_AVAILABLE = False
 try:
     import nltk
-    # Download required NLTK data with error handling
     try:
         nltk.data.find('tokenizers/punkt')
     except LookupError:
@@ -48,9 +47,9 @@ class ResumeAnalyzer:
             try:
                 self.stop_words = set(stopwords.words('english'))
             except:
-                self.stop_words = set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should'])
+                self.stop_words = set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'])
         else:
-            self.stop_words = set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should'])
+            self.stop_words = set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'])
         
         self.action_verbs = {
             'achieved', 'analyzed', 'built', 'created', 'designed', 'developed', 
@@ -284,7 +283,6 @@ class ResumeAnalyzer:
         else:
             recommendations.append("Significant improvements needed across multiple areas")
         
-        # Priority recommendations based on lowest scores
         sorted_scores = sorted(scores.items(), key=lambda x: x[1])
         
         for category, score in sorted_scores[:2]:
@@ -469,10 +467,6 @@ def main():
         border: 1px solid #e5e7eb;
     }
     
-    .sidebar-content {
-        font-family: 'Inter', sans-serif;
-    }
-    
     .sidebar-tip {
         background: #f0f9ff;
         border: 1px solid #e0f2fe;
@@ -640,13 +634,10 @@ def main():
                     for category, score in scores.items():
                         if score >= 85:
                             color = "#10b981"
-                            status = "Excellent"
                         elif score >= 70:
                             color = "#f59e0b"
-                            status = "Good"
                         else:
                             color = "#ef4444"
-                            status = "Needs Work"
                         
                         st.markdown(f"""
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f3f4f6;">
@@ -675,7 +666,7 @@ def main():
                 for category, feedback in categories_feedback:
                     with st.expander(f"{category} - {scores[category]:.0f}/100"):
                         for item in feedback:
-                            if item.startswith("✓") or "excellent" in item.lower() or "good" in item.lower() and "limited" not in item.lower():
+                            if item.startswith("✓") or "excellent" in item.lower() or ("good" in item.lower() and "limited" not in item.lower()):
                                 feedback_class = "feedback-positive"
                             elif item.startswith("✗") or "missing" in item.lower() or "limited" in item.lower():
                                 feedback_class = "feedback-negative"
@@ -755,4 +746,70 @@ DETAILED FEEDBACK:
         with col1:
             st.markdown('<div class="chart-container">', unsafe_allow_html=True)
             st.bar_chart(sample_df.set_index('Category'), height=300)
-            st.markdown('
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+            st.markdown("**Sample Category Breakdown**")
+            for category, score in sample_scores.items():
+                if score >= 85:
+                    color = "#10b981"
+                    icon = "●"
+                elif score >= 70:
+                    color = "#f59e0b"
+                    icon = "●"
+                else:
+                    color = "#ef4444"
+                    icon = "●"
+                
+                st.markdown(f"""
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f3f4f6;">
+                    <span style="font-family: 'Inter', sans-serif; font-weight: 500;">
+                        <span style="color: {color};">{icon}</span> {category}
+                    </span>
+                    <span style="color: {color}; font-weight: 600;">{score}/100</span>
+                </div>
+                """, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Features overview
+        st.markdown("""
+        <div class="analysis-section">
+            <h3 class="section-title">What You'll Get</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("""
+            <div style="padding: 1.5rem; background: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
+                <h4 style="font-family: 'Inter', sans-serif; color: #1f2937; margin: 0 0 0.5rem 0;">Comprehensive Analysis</h4>
+                <p style="font-family: 'Inter', sans-serif; color: #6b7280; margin: 0; font-size: 0.9rem;">
+                    AI-powered evaluation across 6 critical resume categories
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div style="padding: 1.5rem; background: #f8fafc; border-radius: 8px; border-left: 4px solid #10b981;">
+                <h4 style="font-family: 'Inter', sans-serif; color: #1f2937; margin: 0 0 0.5rem 0;">Actionable Feedback</h4>
+                <p style="font-family: 'Inter', sans-serif; color: #6b7280; margin: 0; font-size: 0.9rem;">
+                    Specific recommendations to improve your resume's impact
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown("""
+            <div style="padding: 1.5rem; background: #f8fafc; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                <h4 style="font-family: 'Inter', sans-serif; color: #1f2937; margin: 0 0 0.5rem 0;">Professional Report</h4>
+                <p style="font-family: 'Inter', sans-serif; color: #6b7280; margin: 0; font-size: 0.9rem;">
+                    Downloadable analysis report for future reference
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
