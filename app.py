@@ -634,7 +634,7 @@ def main():
         show_support()
 
 def show_dashboard():
-    st.markdown("## 🎯 AI Resume Analysis Dashboard")
+    st.markdown("## AI Resume Analysis Dashboard")
     
     # Get AI analysis
     ai_analysis = analyze_resume_strength(st.session_state.resume_data)
@@ -643,22 +643,22 @@ def show_dashboard():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        score_color = "🟢" if ai_analysis['overall_score'] >= 70 else "🟡" if ai_analysis['overall_score'] >= 50 else "🔴"
+        score_color = "GREEN" if ai_analysis['overall_score'] >= 70 else "YELLOW" if ai_analysis['overall_score'] >= 50 else "RED"
         st.metric(
             "Overall Score", 
             f"{ai_analysis['overall_score']}/100", 
             help="Comprehensive resume strength score"
         )
-        st.markdown(f"{score_color} **{get_score_rating(ai_analysis['overall_score'])}**")
+        st.markdown(f"**{get_score_rating(ai_analysis['overall_score'])}**")
     
     with col2:
-        ats_color = "🟢" if ai_analysis['ats_score'] >= 70 else "🟡" if ai_analysis['ats_score'] >= 50 else "🔴"
+        ats_color = "GREEN" if ai_analysis['ats_score'] >= 70 else "YELLOW" if ai_analysis['ats_score'] >= 50 else "RED"
         st.metric(
             "ATS Score", 
             f"{ai_analysis['ats_score']}/100",
             help="Applicant Tracking System compatibility"
         )
-        st.markdown(f"{ats_color} **ATS Ready**" if ai_analysis['ats_score'] >= 60 else f"{ats_color} **Needs Work**")
+        st.markdown("**ATS Ready**" if ai_analysis['ats_score'] >= 60 else "**Needs Work**")
     
     with col3:
         st.metric(
@@ -666,7 +666,7 @@ def show_dashboard():
             ai_analysis['industry_fit'],
             help="Detected industry based on your content"
         )
-        st.markdown(f"🎯 **{ai_analysis['industry_fit']}**")
+        st.markdown(f"**{ai_analysis['industry_fit']}**")
     
     with col4:
         completion = calculate_resume_score()
@@ -678,7 +678,7 @@ def show_dashboard():
         st.progress(completion / 100)
     
     # Section breakdown
-    st.markdown("### 📊 Section Analysis")
+    st.markdown("### Section Analysis")
     
     col_left, col_right = st.columns([2, 1])
     
@@ -716,66 +716,66 @@ def show_dashboard():
     
     with col_right:
         # Strengths and weaknesses
-        st.markdown("#### 💪 Strengths")
+        st.markdown("#### Strengths")
         if ai_analysis['strengths']:
             for strength in ai_analysis['strengths'][:3]:
-                st.success(f"✅ {strength}")
+                st.success(f"✓ {strength}")
         else:
             st.info("Complete more sections to see your strengths!")
         
-        st.markdown("#### ⚠️ Areas to Improve")
+        st.markdown("#### Areas to Improve")
         if ai_analysis['weaknesses']:
             for weakness in ai_analysis['weaknesses'][:3]:
-                st.warning(f"⚠️ {weakness}")
+                st.warning(f"! {weakness}")
         else:
             st.success("Great job! No major weaknesses detected.")
     
     # AI Suggestions with priority
-    st.markdown("### 🤖 AI-Powered Recommendations")
+    st.markdown("### AI-Powered Recommendations")
     suggestions = generate_ai_suggestions(st.session_state.resume_data)
     
     # Categorize suggestions by priority
-    critical_suggestions = [s for s in suggestions if "🚨 CRITICAL" in s]
-    important_suggestions = [s for s in suggestions if "💼" in s or "📈" in s or "🎯" in s]
+    critical_suggestions = [s for s in suggestions if "CRITICAL" in s]
+    important_suggestions = [s for s in suggestions if any(x in s for x in ["Add", "Expand", "Include"])]
     general_suggestions = [s for s in suggestions if s not in critical_suggestions and s not in important_suggestions]
     
     if critical_suggestions:
-        st.markdown("#### 🚨 Critical Issues (Fix These First!)")
+        st.markdown("#### Critical Issues (Fix These First!)")
         for suggestion in critical_suggestions:
-            st.error(suggestion.replace("🚨 CRITICAL: ", ""))
+            st.error(suggestion.replace("Critical: ", ""))
     
     if important_suggestions:
-        st.markdown("#### 💡 Important Improvements")
+        st.markdown("#### Important Improvements")
         for suggestion in important_suggestions[:3]:
             st.warning(suggestion)
     
     if general_suggestions:
-        st.markdown("#### ✨ Polish & Enhancement")
+        st.markdown("#### Polish & Enhancement")
         for suggestion in general_suggestions[:3]:
             st.info(suggestion)
     
     # Quick action buttons
-    st.markdown("### ⚡ Quick Actions")
+    st.markdown("### Quick Actions")
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        if st.button("👤 Fix Personal Info", type="secondary"):
-            st.session_state.current_page = "👤 Personal Info"
+        if st.button("Fix Personal Info", type="secondary"):
+            st.session_state.current_page = "Personal Info"
             st.rerun()
     
     with col2:
-        if st.button("💼 Add Experience", type="secondary"):
-            st.session_state.current_page = "💼 Experience"
+        if st.button("Add Experience", type="secondary"):
+            st.session_state.current_page = "Experience"
             st.rerun()
     
     with col3:
-        if st.button("🛠️ Add Skills", type="secondary"):
-            st.session_state.current_page = "🛠️ Skills"
+        if st.button("Add Skills", type="secondary"):
+            st.session_state.current_page = "Skills"
             st.rerun()
     
     with col4:
-        if st.button("📄 Generate Resume", type="primary"):
-            st.session_state.current_page = "📄 Generate Resume"
+        if st.button("Generate Resume", type="primary"):
+            st.session_state.current_page = "Generate Resume"
             st.rerun()
 
 def get_score_rating(score: int) -> str:
@@ -1218,9 +1218,9 @@ def show_support():
         st.markdown("### App Statistics")
         
         # Simulated stats
-        st.metric("Resumes Created", "2,847", "↗ +127 this week")
-        st.metric("Active Users", "1,234", "↗ +89 this week")
-        st.metric("Average Rating", "4.8/5", "↗ +0.2 this month")
+        st.metric("Resumes Created", "2,847", "+127 this week")
+        st.metric("Active Users", "1,234", "+89 this week")
+        st.metric("Average Rating", "4.8/5", "+0.2 this month")
         
         st.markdown("### Connect With Us")
         
@@ -1303,7 +1303,7 @@ def show_footer():
     <div style="text-align: center; padding: 2rem; color: #666;">
         <p><strong>AI Resume Builder Pro</strong> | Built with Streamlit</p>
         <p style="font-size: 0.9em;">
-            Open Source • Free Forever • Privacy Focused<br>
+            Open Source - Free Forever - Privacy Focused<br>
             <a href="https://github.com/yourusername/ai-resume-builder" target="_blank">Star us on GitHub</a> | 
             <a href="mailto:support@resumebuilder.com">Support</a> | 
             <a href="#" onclick="window.open('https://twitter.com/intent/tweet?text=Check out this amazing AI Resume Builder!', '_blank')">Share</a>
