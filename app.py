@@ -1180,7 +1180,7 @@ def show_dashboard():
             else:
                 st.error("❌ Could not extract text from the uploaded file. Please try a different format or check if the file is corrupted.")
     else:
-        st.info("👆 Upload your resume above to get instant AI analysis and automatic information extraction!")d Existing Resume")
+        st.info("Upload your resume above to get instant AI analysis and automatic information extraction!")
     uploaded_file = st.file_uploader(
         "Drop your resume here (any file type supported)", 
         type=None,
