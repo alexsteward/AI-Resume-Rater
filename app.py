@@ -95,45 +95,309 @@ if 'resume_data' not in st.session_state:
         'certifications': []
     }
 
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = "🏠 Dashboard"
+
 def generate_ai_suggestions(resume_data: Dict) -> List[str]:
-    """Generate AI-powered suggestions for resume improvement"""
+    """Generate AI-powered suggestions for resume improvement using built-in intelligence"""
     suggestions = []
-    
-    # Check for missing sections
-    if not resume_data.get('experience'):
-        suggestions.append("💼 Consider adding work experience to strengthen your resume")
-    
-    if not resume_data.get('skills'):
-        suggestions.append("🎯 Add relevant skills to showcase your capabilities")
-    
-    if not resume_data.get('projects'):
-        suggestions.append("🚀 Include projects to demonstrate practical experience")
-    
-    # Check skill diversity
-    skills = resume_data.get('skills', [])
-    if len(skills) < 5:
-        suggestions.append("📈 Add more skills (aim for 8-12 relevant skills)")
-    
-    # Experience suggestions
+    personal = resume_data.get('personal_info', {})
     experiences = resume_data.get('experience', [])
+    skills = resume_data.get('skills', [])
+    education = resume_data.get('education', [])
+    projects = resume_data.get('projects', [])
+    
+    # CRITICAL MISSING SECTIONS
+    if not personal.get('name'):
+        suggestions.append("🚨 CRITICAL: Add your full name to your resume")
+    
+    if not personal.get('email'):
+        suggestions.append("🚨 CRITICAL: Add a professional email address")
+    
+    if not experiences and not projects:
+        suggestions.append("🚨 CRITICAL: Add work experience OR projects - employers need to see your accomplishments")
+    
+    # PROFESSIONAL SUMMARY ANALYSIS
+    summary = personal.get('summary', '')
+    if not summary:
+        suggestions.append("💼 Add a compelling professional summary (2-3 sentences highlighting your value)")
+    elif len(summary.split()) < 15:
+        suggestions.append("📝 Expand your professional summary - aim for 25-50 words to make impact")
+    elif len(summary.split()) > 80:
+        suggestions.append("✂️ Shorten your professional summary - keep it under 60 words for better readability")
+    
+    # EXPERIENCE ANALYSIS
     if experiences:
+        for i, exp in enumerate(experiences):
+            desc = exp.get('description', '')
+            title = exp.get('title', f'Position {i+1}')
+            
+            # Check description length
+            if len(desc.split()) < 15:
+                suggestions.append(f"📈 Expand description for '{title}' - add quantifiable achievements and specific responsibilities")
+            
+            # Check for action verbs
+            action_verbs = ['developed', 'managed', 'led', 'created', 'improved', 'increased', 'decreased', 'implemented', 'designed', 'built', 'achieved', 'delivered', 'optimized', 'streamlined', 'coordinated', 'executed', 'analyzed', 'collaborated', 'supervised', 'trained']
+            if not any(verb in desc.lower() for verb in action_verbs):
+                suggestions.append(f"🎯 Use strong action verbs in '{title}' description (e.g., 'Developed', 'Managed', 'Led', 'Improved')")
+            
+            # Check for numbers/metrics
+            if not any(char.isdigit() for char in desc):
+                suggestions.append(f"📊 Add quantifiable results to '{title}' (e.g., percentages, dollar amounts, team sizes)")
+    
+    # SKILLS ANALYSIS
+    if len(skills) < 6:
+        suggestions.append("🛠️ Add more skills - aim for 8-15 relevant technical and soft skills")
+    elif len(skills) > 20:
+        suggestions.append("🎯 Focus your skills list - too many skills can dilute your message (aim for 10-15)")
+    
+    # Technical skills detection
+    tech_skills = ['python', 'javascript', 'java', 'react', 'sql', 'aws', 'docker', 'git', 'agile', 'scrum']
+    has_tech = any(skill.lower() in [ts for ts in tech_skills] for skill in skills)
+    if not has_tech and any('software' in exp.get('description', '').lower() or 'developer' in exp.get('title', '').lower() for exp in experiences):
+        suggestions.append("💻 Add technical skills relevant to your software/tech experience")
+    
+    # EDUCATION ANALYSIS
+    if not education:
+        suggestions.append("🎓 Consider adding education section - even if incomplete, it shows your learning foundation")
+    
+    # PROJECTS ANALYSIS
+    if not projects and len(experiences) < 2:
+        suggestions.append("🚀 Add personal or academic projects to demonstrate your skills and initiative")
+    
+    # CONTACT INFO ANALYSIS
+    if personal.get('phone') and not any(char.isdigit() for char in personal.get('phone', '')):
+        suggestions.append("📞 Ensure your phone number is properly formatted")
+    
+    if personal.get('email') and '@' not in personal.get('email', ''):
+        suggestions.append("📧 Check your email format - it should contain '@' symbol")
+    
+    # LINKEDIN ANALYSIS
+    if not personal.get('linkedin'):
+        suggestions.append("💼 Add your LinkedIn profile URL to increase professional credibility")
+    
+    # ADVANCED CONTENT ANALYSIS
+    all_text = ' '.join([
+        personal.get('summary', ''),
+        ' '.join([exp.get('description', '') for exp in experiences]),
+        ' '.join([proj.get('description', '') for proj in projects])
+    ]).lower()
+    
+    # Check for buzzwords to avoid
+    buzzwords = ['synergy', 'leverage', 'utilize', 'dynamic', 'innovative', 'cutting-edge', 'best practices', 'think outside the box']
+    found_buzzwords = [word for word in buzzwords if word in all_text]
+    if found_buzzwords:
+        suggestions.append(f"⚠️ Consider replacing buzzwords like '{found_buzzwords[0]}' with specific, concrete language")
+    
+    # Check for passive voice
+    passive_indicators = ['was responsible for', 'was tasked with', 'was involved in', 'duties included']
+    if any(indicator in all_text for indicator in passive_indicators):
+        suggestions.append("💪 Replace passive language ('was responsible for') with active voice ('Led', 'Managed', 'Developed')")
+    
+    # INDUSTRY-SPECIFIC SUGGESTIONS
+    job_titles_text = ' '.join([exp.get('title', '') for exp in experiences]).lower()
+    
+    if 'manager' in job_titles_text or 'lead' in job_titles_text:
+        if 'team' not in all_text and 'people' not in all_text:
+            suggestions.append("👥 As a manager/lead, mention team size and leadership accomplishments")
+    
+    if 'sales' in job_titles_text:
+        if not any(word in all_text for word in ['revenue', 'quota', 'target', '%', 'growth']):
+            suggestions.append("💰 Sales roles should include revenue numbers, quota achievements, and growth metrics")
+    
+    if 'developer' in job_titles_text or 'engineer' in job_titles_text:
+        if not any(word in all_text for word in ['built', 'developed', 'code', 'application', 'system']):
+            suggestions.append("⚙️ Technical roles should highlight specific technologies and systems you've built")
+    
+    # EXPERIENCE TIMELINE ANALYSIS
+    if len(experiences) > 1:
+        # Check for employment gaps
+        years = []
         for exp in experiences:
-            if len(exp.get('description', '').split()) < 20:
-                suggestions.append("📝 Expand job descriptions with quantifiable achievements")
-                break
+            start_year = exp.get('start_year')
+            end_year = exp.get('end_year')
+            if isinstance(start_year, (int, float)) and isinstance(end_year, (int, float)):
+                years.extend([start_year, end_year])
+        
+        if years and max(years) - min(years) > len(experiences) * 2:
+            suggestions.append("📅 Consider addressing any employment gaps in your cover letter or summary")
     
-    # Add motivational suggestions
-    motivational = [
-        "✨ Use action verbs to start your bullet points (e.g., 'Developed', 'Managed', 'Improved')",
-        "📊 Include numbers and metrics to quantify your achievements",
-        "🎯 Tailor your resume to match the job description keywords",
-        "🏆 Highlight your most impressive accomplishments first",
-        "📱 Ensure your contact information is current and professional"
-    ]
+    # FINAL POLISH SUGGESTIONS
+    if len(suggestions) < 3:
+        polish_tips = [
+            "✨ Use consistent formatting for dates (e.g., 'Jan 2020 - Dec 2022')",
+            "🔍 Proofread for typos - even small errors can hurt your chances",
+            "📄 Save your resume as 'FirstName_LastName_Resume.pdf' for easy identification",
+            "🎯 Tailor your resume for each job application by matching keywords from job descriptions",
+            "📱 Ensure your resume looks good on mobile devices - many recruiters review on phones"
+        ]
+        suggestions.extend(random.sample(polish_tips, min(2, len(polish_tips))))
     
-    suggestions.extend(random.sample(motivational, min(3, len(motivational))))
+    # MOTIVATIONAL BOOST
+    completion_rate = calculate_resume_score() / 100
+    if completion_rate > 0.8:
+        suggestions.append("🎉 Great job! Your resume is looking professional and comprehensive!")
+    elif completion_rate > 0.6:
+        suggestions.append("👍 You're making excellent progress! Just a few more improvements needed.")
+    else:
+        suggestions.append("💪 Keep going! Every section you complete makes your resume stronger.")
     
-    return suggestions[:6]  # Return max 6 suggestions
+    return suggestions[:8]  # Return max 8 suggestions to avoid overwhelming
+
+def analyze_resume_strength(resume_data: Dict) -> Dict[str, Any]:
+    """Comprehensive AI analysis of resume strength"""
+    analysis = {
+        'overall_score': 0,
+        'section_scores': {},
+        'strengths': [],
+        'weaknesses': [],
+        'industry_fit': 'General',
+        'ats_score': 0,
+        'recommendations': []
+    }
+    
+    personal = resume_data.get('personal_info', {})
+    experiences = resume_data.get('experience', [])
+    skills = resume_data.get('skills', [])
+    education = resume_data.get('education', [])
+    projects = resume_data.get('projects', [])
+    
+    # SECTION SCORING
+    # Personal Info (25 points)
+    personal_score = 0
+    if personal.get('name'): personal_score += 5
+    if personal.get('email'): personal_score += 5
+    if personal.get('phone'): personal_score += 3
+    if personal.get('location'): personal_score += 2
+    if personal.get('linkedin'): personal_score += 3
+    if personal.get('summary') and len(personal.get('summary', '').split()) >= 20: personal_score += 7
+    analysis['section_scores']['Personal Info'] = min(personal_score, 25)
+    
+    # Experience (35 points)
+    exp_score = 0
+    if experiences:
+        exp_score += min(20, len(experiences) * 7)  # Up to 20 points for having experiences
+        
+        # Quality scoring
+        for exp in experiences:
+            desc = exp.get('description', '')
+            if len(desc.split()) >= 20: exp_score += 3
+            if any(char.isdigit() for char in desc): exp_score += 2  # Has metrics
+            
+            action_verbs = ['developed', 'managed', 'led', 'created', 'improved', 'increased']
+            if any(verb in desc.lower() for verb in action_verbs): exp_score += 2
+    
+    analysis['section_scores']['Experience'] = min(exp_score, 35)
+    
+    # Skills (20 points)
+    skills_score = 0
+    if 6 <= len(skills) <= 15: skills_score += 15
+    elif len(skills) > 0: skills_score += 10
+    
+    # Check for skill diversity
+    skill_categories = {
+        'technical': ['python', 'javascript', 'java', 'sql', 'aws', 'docker', 'react', 'node'],
+        'management': ['leadership', 'project management', 'team', 'agile', 'scrum'],
+        'communication': ['communication', 'presentation', 'writing', 'public speaking']
+    }
+    
+    categories_covered = 0
+    for category, keywords in skill_categories.items():
+        if any(keyword in ' '.join(skills).lower() for keyword in keywords):
+            categories_covered += 1
+    
+    skills_score += categories_covered * 2
+    analysis['section_scores']['Skills'] = min(skills_score, 20)
+    
+    # Education (10 points)
+    edu_score = min(len(education) * 5, 10) if education else 0
+    analysis['section_scores']['Education'] = edu_score
+    
+    # Projects (10 points)
+    proj_score = min(len(projects) * 3, 10) if projects else 0
+    analysis['section_scores']['Projects'] = proj_score
+    
+    # Calculate overall score
+    analysis['overall_score'] = sum(analysis['section_scores'].values())
+    
+    # ATS SCORING (Applicant Tracking System)
+    ats_score = 0
+    
+    # Contact info formatting
+    if personal.get('email') and '@' in personal.get('email', ''): ats_score += 10
+    if personal.get('phone'): ats_score += 10
+    
+    # Section headers (standard naming)
+    if experiences: ats_score += 15
+    if skills: ats_score += 15
+    if education: ats_score += 10
+    
+    # Content density
+    total_words = len(' '.join([
+        personal.get('summary', ''),
+        ' '.join([exp.get('description', '') for exp in experiences]),
+        ' '.join([proj.get('description', '') for proj in projects])
+    ]).split())
+    
+    if 200 <= total_words <= 600: ats_score += 20
+    elif total_words > 100: ats_score += 10
+    
+    # Skills formatting
+    if 5 <= len(skills) <= 20: ats_score += 20
+    
+    analysis['ats_score'] = min(ats_score, 100)
+    
+    # IDENTIFY STRENGTHS
+    if analysis['section_scores']['Experience'] >= 25:
+        analysis['strengths'].append("Strong work experience with detailed descriptions")
+    
+    if analysis['section_scores']['Skills'] >= 15:
+        analysis['strengths'].append("Comprehensive skills section")
+    
+    if personal.get('summary') and len(personal.get('summary', '').split()) >= 25:
+        analysis['strengths'].append("Compelling professional summary")
+    
+    if len(projects) >= 2:
+        analysis['strengths'].append("Good project portfolio demonstrating initiative")
+    
+    # IDENTIFY WEAKNESSES
+    if analysis['section_scores']['Personal Info'] < 20:
+        analysis['weaknesses'].append("Incomplete contact information")
+    
+    if analysis['section_scores']['Experience'] < 20:
+        analysis['weaknesses'].append("Limited work experience details")
+    
+    if analysis['section_scores']['Skills'] < 10:
+        analysis['weaknesses'].append("Insufficient skills listed")
+    
+    if analysis['ats_score'] < 60:
+        analysis['weaknesses'].append("May have difficulty passing ATS systems")
+    
+    # INDUSTRY FIT DETECTION
+    all_text = ' '.join([
+        ' '.join([exp.get('title', '') + ' ' + exp.get('description', '') for exp in experiences]),
+        ' '.join(skills),
+        ' '.join([proj.get('name', '') + ' ' + proj.get('description', '') for proj in projects])
+    ]).lower()
+    
+    industry_keywords = {
+        'Software Development': ['developer', 'programming', 'software', 'code', 'javascript', 'python', 'react', 'git'],
+        'Data Science': ['data', 'analytics', 'machine learning', 'python', 'sql', 'statistics', 'visualization'],
+        'Marketing': ['marketing', 'social media', 'campaign', 'brand', 'content', 'seo', 'analytics'],
+        'Sales': ['sales', 'revenue', 'quota', 'client', 'business development', 'relationship'],
+        'Management': ['manager', 'team', 'leadership', 'strategy', 'operations', 'project management'],
+        'Design': ['design', 'ux', 'ui', 'figma', 'adobe', 'creative', 'visual', 'user experience']
+    }
+    
+    industry_scores = {}
+    for industry, keywords in industry_keywords.items():
+        score = sum(1 for keyword in keywords if keyword in all_text)
+        industry_scores[industry] = score
+    
+    if industry_scores:
+        analysis['industry_fit'] = max(industry_scores, key=industry_scores.get)
+    
+    return analysis
 
 def create_skills_chart(skills: List[str]) -> go.Figure:
     """Create an interactive skills chart"""
@@ -366,53 +630,171 @@ def main():
         show_support()
 
 def show_dashboard():
-    st.markdown("## 🎯 Welcome to AI Resume Builder Pro")
+    st.markdown("## 🎯 AI Resume Analysis Dashboard")
     
-    col1, col2 = st.columns([2, 1])
+    # Get AI analysis
+    ai_analysis = analyze_resume_strength(st.session_state.resume_data)
+    
+    # Main metrics row
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.markdown("""
-        <div class="feature-card">
-            <h3>🤖 AI-Powered Suggestions</h3>
-            <p>Get intelligent recommendations to improve your resume and make it stand out to employers.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # AI Suggestions
-        suggestions = generate_ai_suggestions(st.session_state.resume_data)
-        if suggestions:
-            st.markdown("### 💡 AI Recommendations")
-            for suggestion in suggestions:
-                st.info(suggestion)
+        score_color = "🟢" if ai_analysis['overall_score'] >= 70 else "🟡" if ai_analysis['overall_score'] >= 50 else "🔴"
+        st.metric(
+            "Overall Score", 
+            f"{ai_analysis['overall_score']}/100", 
+            help="Comprehensive resume strength score"
+        )
+        st.markdown(f"{score_color} **{get_score_rating(ai_analysis['overall_score'])}**")
     
     with col2:
-        st.markdown("### 🎨 Resume Preview")
-        if st.session_state.resume_data['personal_info'].get('name'):
-            st.success("✅ Personal Info Added")
-        else:
-            st.warning("⚠️ Add Personal Info")
-            
-        if st.session_state.resume_data['experience']:
-            st.success("✅ Experience Added")
-        else:
-            st.warning("⚠️ Add Experience")
-            
-        if st.session_state.resume_data['skills']:
-            st.success("✅ Skills Added")
-        else:
-            st.warning("⚠️ Add Skills")
+        ats_color = "🟢" if ai_analysis['ats_score'] >= 70 else "🟡" if ai_analysis['ats_score'] >= 50 else "🔴"
+        st.metric(
+            "ATS Score", 
+            f"{ai_analysis['ats_score']}/100",
+            help="Applicant Tracking System compatibility"
+        )
+        st.markdown(f"{ats_color} **ATS Ready**" if ai_analysis['ats_score'] >= 60 else f"{ats_color} **Needs Work**")
     
-    # File upload section
-    st.markdown("### 📤 Upload Existing Resume")
-    uploaded_file = st.file_uploader(
-        "Drop your resume here (PDF/DOCX)", 
-        type=['pdf', 'docx'],
-        help="Upload your existing resume to extract information automatically"
-    )
+    with col3:
+        st.metric(
+            "Industry Match", 
+            ai_analysis['industry_fit'],
+            help="Detected industry based on your content"
+        )
+        st.markdown(f"🎯 **{ai_analysis['industry_fit']}**")
     
-    if uploaded_file:
-        st.success(f"✅ File '{uploaded_file.name}' uploaded successfully!")
-        st.info("📝 AI analysis feature coming soon - for now, please fill out the forms manually.")
+    with col4:
+        completion = calculate_resume_score()
+        st.metric(
+            "Completion", 
+            f"{completion}%",
+            help="How complete your resume is"
+        )
+        st.progress(completion / 100)
+    
+    # Section breakdown
+    st.markdown("### 📊 Section Analysis")
+    
+    col_left, col_right = st.columns([2, 1])
+    
+    with col_left:
+        # Section scores chart
+        sections_df = pd.DataFrame([
+            {'Section': section, 'Score': score, 'Max': get_max_score(section)}
+            for section, score in ai_analysis['section_scores'].items()
+        ])
+        
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            name='Current Score',
+            x=sections_df['Section'],
+            y=sections_df['Score'],
+            marker_color='#667eea'
+        ))
+        fig.add_trace(go.Bar(
+            name='Max Possible',
+            x=sections_df['Section'],
+            y=sections_df['Max'] - sections_df['Score'],
+            marker_color='lightgray',
+            base=sections_df['Score']
+        ))
+        
+        fig.update_layout(
+            title="Resume Section Breakdown",
+            barmode='stack',
+            yaxis_title="Points",
+            template="plotly_white",
+            height=400
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col_right:
+        # Strengths and weaknesses
+        st.markdown("#### 💪 Strengths")
+        if ai_analysis['strengths']:
+            for strength in ai_analysis['strengths'][:3]:
+                st.success(f"✅ {strength}")
+        else:
+            st.info("Complete more sections to see your strengths!")
+        
+        st.markdown("#### ⚠️ Areas to Improve")
+        if ai_analysis['weaknesses']:
+            for weakness in ai_analysis['weaknesses'][:3]:
+                st.warning(f"⚠️ {weakness}")
+        else:
+            st.success("Great job! No major weaknesses detected.")
+    
+    # AI Suggestions with priority
+    st.markdown("### 🤖 AI-Powered Recommendations")
+    suggestions = generate_ai_suggestions(st.session_state.resume_data)
+    
+    # Categorize suggestions by priority
+    critical_suggestions = [s for s in suggestions if "🚨 CRITICAL" in s]
+    important_suggestions = [s for s in suggestions if "💼" in s or "📈" in s or "🎯" in s]
+    general_suggestions = [s for s in suggestions if s not in critical_suggestions and s not in important_suggestions]
+    
+    if critical_suggestions:
+        st.markdown("#### 🚨 Critical Issues (Fix These First!)")
+        for suggestion in critical_suggestions:
+            st.error(suggestion.replace("🚨 CRITICAL: ", ""))
+    
+    if important_suggestions:
+        st.markdown("#### 💡 Important Improvements")
+        for suggestion in important_suggestions[:3]:
+            st.warning(suggestion)
+    
+    if general_suggestions:
+        st.markdown("#### ✨ Polish & Enhancement")
+        for suggestion in general_suggestions[:3]:
+            st.info(suggestion)
+    
+    # Quick action buttons
+    st.markdown("### ⚡ Quick Actions")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button("👤 Fix Personal Info", type="secondary"):
+            st.session_state.current_page = "👤 Personal Info"
+            st.rerun()
+    
+    with col2:
+        if st.button("💼 Add Experience", type="secondary"):
+            st.session_state.current_page = "💼 Experience"
+            st.rerun()
+    
+    with col3:
+        if st.button("🛠️ Add Skills", type="secondary"):
+            st.session_state.current_page = "🛠️ Skills"
+            st.rerun()
+    
+    with col4:
+        if st.button("📄 Generate Resume", type="primary"):
+            st.session_state.current_page = "📄 Generate Resume"
+            st.rerun()
+
+def get_score_rating(score: int) -> str:
+    """Get human-readable rating for resume score"""
+    if score >= 85:
+        return "Excellent"
+    elif score >= 70:
+        return "Good"
+    elif score >= 50:
+        return "Needs Work"
+    else:
+        return "Poor"
+
+def get_max_score(section: str) -> int:
+    """Get maximum possible score for each section"""
+    max_scores = {
+        'Personal Info': 25,
+        'Experience': 35,
+        'Skills': 20,
+        'Education': 10,
+        'Projects': 10
+    }
+    return max_scores.get(section, 25)
 
 def show_personal_info():
     st.markdown("## 👤 Personal Information")
@@ -751,6 +1133,10 @@ def show_support():
             <h3>🙏 Help Us Keep This Free!</h3>
             <p>AI Resume Builder Pro is completely free to use. If you found this tool helpful, 
             consider supporting our development to keep adding new features!</p>
+            <p><strong>💰 Support via Venmo: <a href="https://account.venmo.com/u/xarminth" target="_blank">@xarminth</a></strong></p>
+        </div>
+        """, unsafe_allow_html=True)<p>AI Resume Builder Pro is completely free to use. If you found this tool helpful, 
+            consider supporting our development to keep adding new features!</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -768,9 +1154,9 @@ def show_support():
             </div>
             """, unsafe_allow_html=True)
             
-            # PayPal button (placeholder)
-            if st.button("☕ Donate $5", key="coffee"):
-                st.info("🔗 PayPal integration coming soon! Thank you for your support!")
+            if st.button("☕ Donate $5 via Venmo", key="coffee"):
+                st.success("💰 Send $5 to @xarminth on Venmo!")
+                st.markdown("**[Open Venmo: @xarminth](https://account.venmo.com/u/xarminth)**")
         
         with col_meal:
             st.markdown("""
@@ -781,8 +1167,9 @@ def show_support():
             </div>
             """, unsafe_allow_html=True)
             
-            if st.button("🍕 Donate $15", key="lunch"):
-                st.info("🔗 PayPal integration coming soon! Thank you for your support!")
+            if st.button("🍕 Donate $15 via Venmo", key="lunch"):
+                st.success("💰 Send $15 to @xarminth on Venmo!")
+                st.markdown("**[Open Venmo: @xarminth](https://account.venmo.com/u/xarminth)**")
         
         with col_month:
             st.markdown("""
@@ -793,8 +1180,9 @@ def show_support():
             </div>
             """, unsafe_allow_html=True)
             
-            if st.button("🚀 Donate $25", key="monthly"):
-                st.info("🔗 PayPal integration coming soon! Thank you for your support!")
+            if st.button("🚀 Donate $25 via Venmo", key="monthly"):
+                st.success("💰 Send $25 to @xarminth on Venmo!")
+                st.markdown("**[Open Venmo: @xarminth](https://account.venmo.com/u/xarminth)**")
         
         st.markdown("### 🎯 How Your Support Helps")
         st.markdown("""
