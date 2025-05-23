@@ -39,7 +39,6 @@ try:
     from nltk.tokenize import word_tokenize, sent_tokenize
     NLTK_AVAILABLE = True
 except Exception as e:
-    st.warning("NLTK not fully available, using basic text processing")
     NLTK_AVAILABLE = False
 
 class ResumeAnalyzer:
@@ -105,12 +104,20 @@ class ResumeAnalyzer:
         score = sum([has_email, has_phone, has_linkedin]) / 3 * 100
         
         feedback = []
-        if not has_email:
-            feedback.append("❌ Missing email address")
-        if not has_phone:
-            feedback.append("❌ Missing phone number")
-        if not has_linkedin:
-            feedback.append("❌ Missing LinkedIn profile")
+        if has_email:
+            feedback.append("✓ Email address found")
+        else:
+            feedback.append("✗ Missing email address")
+        
+        if has_phone:
+            feedback.append("✓ Phone number found")
+        else:
+            feedback.append("✗ Missing phone number")
+            
+        if has_linkedin:
+            feedback.append("✓ LinkedIn profile found")
+        else:
+            feedback.append("✗ LinkedIn profile missing")
             
         return score, feedback
 
@@ -130,15 +137,14 @@ class ResumeAnalyzer:
         feedback = []
         for section, present in sections.items():
             if present:
-                feedback.append(f"✅ {section.title()} section found")
+                feedback.append(f"✓ {section.title()} section present")
             else:
-                feedback.append(f"❌ {section.title()} section missing")
+                feedback.append(f"✗ {section.title()} section missing")
                 
         return score, feedback
 
     def simple_word_tokenize(self, text):
         """Simple word tokenization fallback when NLTK is not available"""
-        # Remove punctuation and split on whitespace
         import string
         text = text.translate(str.maketrans('', '', string.punctuation))
         return text.lower().split()
@@ -156,33 +162,32 @@ class ResumeAnalyzer:
         found_verbs = [word for word in words if word in self.action_verbs]
         unique_verbs = set(found_verbs)
         
-        # Score based on variety and usage
         verb_variety = len(unique_verbs)
-        score = min(verb_variety * 10, 100)  # Max 100 points
+        score = min(verb_variety * 10, 100)
         
         feedback = []
         if verb_variety >= 8:
-            feedback.append(f"✅ Great use of action verbs ({verb_variety} different verbs)")
+            feedback.append(f"Excellent variety of action verbs ({verb_variety} unique)")
         elif verb_variety >= 5:
-            feedback.append(f"⚠️ Good use of action verbs ({verb_variety} different verbs)")
+            feedback.append(f"Good use of action verbs ({verb_variety} unique)")
         else:
-            feedback.append(f"❌ Limited use of action verbs ({verb_variety} different verbs)")
+            feedback.append(f"Limited action verb variety ({verb_variety} unique)")
+            feedback.append("Consider using more impactful action verbs")
             
         if found_verbs:
-            most_common = Counter(found_verbs).most_common(5)
-            feedback.append(f"Most used: {', '.join([verb for verb, count in most_common])}")
+            most_common = Counter(found_verbs).most_common(3)
+            feedback.append(f"Most frequent: {', '.join([verb for verb, count in most_common])}")
         
         return score, feedback
 
     def analyze_quantifiable_results(self, text):
         """Analyze presence of numbers and quantifiable achievements"""
-        # Look for numbers, percentages, dollar amounts
         number_patterns = [
-            r'\d+%',  # Percentages
-            r'\$\d+',  # Dollar amounts
-            r'\d+\+',  # Numbers with plus
-            r'\d{1,3}(?:,\d{3})*',  # Large numbers with commas
-            r'\d+(?:\.\d+)?[KMB]',  # Numbers with K, M, B suffix
+            r'\d+%',
+            r'\$\d+',
+            r'\d+\+',
+            r'\d{1,3}(?:,\d{3})*',
+            r'\d+(?:\.\d+)?[KMB]',
         ]
         
         quantifiable_results = []
@@ -190,16 +195,16 @@ class ResumeAnalyzer:
             matches = re.findall(pattern, text)
             quantifiable_results.extend(matches)
         
-        score = min(len(quantifiable_results) * 15, 100)  # Max 100 points
+        score = min(len(quantifiable_results) * 15, 100)
         
         feedback = []
         if len(quantifiable_results) >= 5:
-            feedback.append(f"✅ Excellent quantifiable results ({len(quantifiable_results)} found)")
+            feedback.append(f"Strong quantifiable results ({len(quantifiable_results)} metrics found)")
         elif len(quantifiable_results) >= 3:
-            feedback.append(f"⚠️ Good quantifiable results ({len(quantifiable_results)} found)")
+            feedback.append(f"Moderate quantifiable results ({len(quantifiable_results)} metrics found)")
         else:
-            feedback.append(f"❌ Few quantifiable results ({len(quantifiable_results)} found)")
-            feedback.append("💡 Add specific numbers, percentages, or dollar amounts to show impact")
+            feedback.append(f"Limited quantifiable results ({len(quantifiable_results)} metrics found)")
+            feedback.append("Add specific numbers, percentages, or metrics to demonstrate impact")
         
         return score, feedback
 
@@ -211,39 +216,36 @@ class ResumeAnalyzer:
         found_soft = [skill for skill in self.soft_skills if skill in text_lower]
         
         total_skills = len(found_technical) + len(found_soft)
-        score = min(total_skills * 5, 100)  # Max 100 points
+        score = min(total_skills * 5, 100)
         
         feedback = []
-        feedback.append(f"Technical skills found: {len(found_technical)}")
-        feedback.append(f"Soft skills found: {len(found_soft)}")
+        feedback.append(f"Technical skills identified: {len(found_technical)}")
+        feedback.append(f"Soft skills identified: {len(found_soft)}")
         
         if found_technical:
-            feedback.append(f"Top technical: {', '.join(found_technical[:5])}")
+            feedback.append(f"Key technical skills: {', '.join(found_technical[:3])}")
         if found_soft:
-            feedback.append(f"Top soft skills: {', '.join(found_soft[:5])}")
+            feedback.append(f"Key soft skills: {', '.join(found_soft[:3])}")
             
         if total_skills < 5:
-            feedback.append("💡 Consider adding more relevant skills")
+            feedback.append("Consider expanding your skills section")
         
         return score, feedback
 
     def analyze_length_and_format(self, text):
         """Analyze resume length and basic formatting"""
         word_count = len(text.split())
-        char_count = len(text)
         
-        # Ideal word count: 400-800 words
         if 400 <= word_count <= 800:
             length_score = 100
-            length_feedback = f"✅ Good length ({word_count} words)"
+            length_feedback = f"Optimal length ({word_count} words)"
         elif word_count < 400:
             length_score = 70
-            length_feedback = f"⚠️ Might be too short ({word_count} words)"
+            length_feedback = f"May be too brief ({word_count} words)"
         else:
             length_score = 80
-            length_feedback = f"⚠️ Might be too long ({word_count} words)"
+            length_feedback = f"May be too lengthy ({word_count} words)"
         
-        # Check for basic formatting indicators
         has_bullets = '•' in text or '-' in text or '*' in text
         has_sections = text.count('\n\n') > 3
         
@@ -252,15 +254,15 @@ class ResumeAnalyzer:
         
         if has_bullets:
             format_score += 50
-            format_feedback.append("✅ Uses bullet points")
+            format_feedback.append("Uses bullet points effectively")
         else:
-            format_feedback.append("❌ No bullet points detected")
+            format_feedback.append("Consider using bullet points for better readability")
             
         if has_sections:
             format_score += 50
-            format_feedback.append("✅ Well-structured sections")
+            format_feedback.append("Well-organized section structure")
         else:
-            format_feedback.append("❌ Poor section structure")
+            format_feedback.append("Improve section organization and spacing")
         
         overall_score = (length_score + format_score) / 2
         all_feedback = [length_feedback] + format_feedback
@@ -273,334 +275,300 @@ class ResumeAnalyzer:
         
         recommendations = []
         
-        if avg_score >= 80:
-            recommendations.append("🎉 Excellent resume! You're ready to apply.")
-        elif avg_score >= 60:
-            recommendations.append("👍 Good resume with room for improvement.")
+        if avg_score >= 85:
+            recommendations.append("Excellent resume quality - ready for applications")
+        elif avg_score >= 70:
+            recommendations.append("Good foundation with room for targeted improvements")
+        elif avg_score >= 55:
+            recommendations.append("Moderate quality - several areas need attention")
         else:
-            recommendations.append("⚠️ Resume needs significant improvements.")
+            recommendations.append("Significant improvements needed across multiple areas")
         
-        # Specific recommendations based on lowest scores
+        # Priority recommendations based on lowest scores
         sorted_scores = sorted(scores.items(), key=lambda x: x[1])
         
-        for category, score in sorted_scores[:2]:  # Focus on 2 lowest scores
+        for category, score in sorted_scores[:2]:
             if score < 70:
                 if category == 'Contact Information':
-                    recommendations.append("🔧 Priority: Complete your contact information")
+                    recommendations.append("Priority: Complete all contact information")
                 elif category == 'Action Verbs':
-                    recommendations.append("🔧 Priority: Use more strong action verbs")
+                    recommendations.append("Priority: Incorporate more dynamic action verbs")
                 elif category == 'Quantifiable Results':
-                    recommendations.append("🔧 Priority: Add specific numbers and achievements")
+                    recommendations.append("Priority: Add measurable achievements and metrics")
                 elif category == 'Skills':
-                    recommendations.append("🔧 Priority: Expand your skills section")
+                    recommendations.append("Priority: Expand and detail your skills section")
                 elif category == 'Sections':
-                    recommendations.append("🔧 Priority: Include all essential sections")
+                    recommendations.append("Priority: Include all essential resume sections")
+                elif category == 'Format & Length':
+                    recommendations.append("Priority: Optimize formatting and length")
         
         return avg_score, recommendations
 
 def main():
     st.set_page_config(
-        page_title="AI Resume Assistant",
-        page_icon="🚀",
+        page_title="AI Resume Analyzer",
+        page_icon="📄",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="collapsed"
     )
     
-    # Custom CSS for flashy, techy design
+    # Modern, professional CSS
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    .main {
+        padding-top: 2rem;
+    }
     
     .main-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 20px;
-        margin-bottom: 2rem;
+        padding: 3rem 2rem;
+        border-radius: 16px;
+        margin-bottom: 3rem;
         text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        animation: glow 2s ease-in-out infinite alternate;
-    }
-    
-    @keyframes glow {
-        from { box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
-        to { box-shadow: 0 15px 40px rgba(118, 75, 162, 0.6); }
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
     
     .main-title {
-        font-family: 'Orbitron', monospace;
-        font-size: 3.5rem;
-        font-weight: 900;
+        font-family: 'Inter', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
         color: white;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         margin: 0;
-        background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
-        background-size: 400% 400%;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        animation: gradient 3s ease infinite;
-    }
-    
-    @keyframes gradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+        letter-spacing: -0.025em;
     }
     
     .subtitle {
-        font-family: 'Rajdhani', sans-serif;
-        font-size: 1.3rem;
+        font-family: 'Inter', sans-serif;
+        font-size: 1.1rem;
         color: rgba(255,255,255,0.9);
         margin-top: 0.5rem;
         font-weight: 400;
     }
     
-    .cyber-border {
-        border: 2px solid #00ffff;
-        border-radius: 15px;
-        padding: 1.5rem;
-        background: linear-gradient(145deg, rgba(0,255,255,0.1), rgba(255,0,255,0.05));
-        box-shadow: 0 0 20px rgba(0,255,255,0.3);
-        margin: 1rem 0;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .cyber-border::before {
-        content: '';
-        position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
-        background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff);
-        background-size: 400% 400%;
-        border-radius: 15px;
-        z-index: -1;
-        animation: border-glow 3s ease infinite;
-    }
-    
-    @keyframes border-glow {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+    .upload-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 2rem;
     }
     
     .metric-card {
-        background: linear-gradient(145deg, #1e3c72, #2a5298);
-        border-radius: 15px;
+        background: white;
+        border-radius: 12px;
         padding: 1.5rem;
         text-align: center;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        border: 1px solid rgba(255,255,255,0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #e5e7eb;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     
     .metric-card:hover {
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: 0 15px 35px rgba(0,255,255,0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
     
-    .score-text {
-        font-family: 'Orbitron', monospace;
+    .score-display {
+        font-family: 'Inter', sans-serif;
         font-size: 2.5rem;
         font-weight: 700;
-        color: #00ffff;
-        text-shadow: 0 0 10px rgba(0,255,255,0.8);
+        margin: 0.5rem 0;
     }
     
-    .neon-text {
-        font-family: 'Rajdhani', sans-serif;
-        color: #ff6b6b;
-        font-weight: 600;
-        text-shadow: 0 0 10px rgba(255,107,107,0.8);
-    }
-    
-    .tech-panel {
-        background: linear-gradient(145deg, #0f0f23, #1a1a3e);
-        border: 1px solid #333366;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        position: relative;
-    }
-    
-    .tech-panel::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
-        border-radius: 12px 12px 0 0;
-    }
-    
-    .upload-zone {
-        border: 3px dashed #00ffff;
-        border-radius: 20px;
-        padding: 3rem;
-        text-align: center;
-        background: linear-gradient(145deg, rgba(0,255,255,0.05), rgba(255,0,255,0.02));
-        transition: all 0.3s ease;
-        animation: pulse-border 2s infinite;
-    }
-    
-    @keyframes pulse-border {
-        0% { border-color: #00ffff; box-shadow: 0 0 0 0 rgba(0,255,255,0.7); }
-        70% { border-color: #ff00ff; box-shadow: 0 0 0 10px rgba(255,0,255,0); }
-        100% { border-color: #00ffff; box-shadow: 0 0 0 0 rgba(0,255,255,0); }
-    }
-    
-    .sidebar .sidebar-content {
-        background: linear-gradient(180deg, #1e3c72, #2a5298);
-    }
+    .score-excellent { color: #10b981; }
+    .score-good { color: #f59e0b; }
+    .score-needs-work { color: #ef4444; }
     
     .status-badge {
         display: inline-block;
-        padding: 0.3rem 0.8rem;
+        padding: 0.25rem 0.75rem;
         border-radius: 20px;
-        font-size: 0.8rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .badge-excellent {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-good {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-needs-work {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .analysis-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #e5e7eb;
+        margin: 1rem 0;
+    }
+    
+    .section-title {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.5rem;
         font-weight: 600;
-        font-family: 'Rajdhani', sans-serif;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #f3f4f6;
+        padding-bottom: 0.5rem;
     }
     
-    .status-excellent {
-        background: linear-gradient(45deg, #4ecdc4, #44a08d);
-        color: white;
-        box-shadow: 0 4px 15px rgba(78,205,196,0.4);
+    .feedback-item {
+        padding: 0.75rem 1rem;
+        margin: 0.5rem 0;
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.95rem;
+        line-height: 1.5;
     }
     
-    .status-good {
-        background: linear-gradient(45deg, #f093fb, #f5576c);
-        color: white;
-        box-shadow: 0 4px 15px rgba(245,87,108,0.4);
+    .feedback-positive {
+        background-color: #f0fdf4;
+        border-left: 4px solid #22c55e;
+        color: #15803d;
     }
     
-    .status-poor {
-        background: linear-gradient(45deg, #fc466b, #3f5efb);
-        color: white;
-        box-shadow: 0 4px 15px rgba(252,70,107,0.4);
+    .feedback-negative {
+        background-color: #fef2f2;
+        border-left: 4px solid #ef4444;
+        color: #dc2626;
     }
     
-    .floating-particles {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: -1;
+    .feedback-neutral {
+        background-color: #f8fafc;
+        border-left: 4px solid #6b7280;
+        color: #374151;
     }
     
-    .particle {
-        position: absolute;
-        width: 4px;
-        height: 4px;
-        background: #00ffff;
-        border-radius: 50%;
-        animation: float 6s infinite ease-in-out;
+    .recommendation-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        font-family: 'Inter', sans-serif;
     }
     
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
-        50% { transform: translateY(-20px) rotate(180deg); opacity: 0.3; }
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #e5e7eb;
     }
     
-    /* Hide Streamlit branding */
+    .sidebar-content {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .sidebar-tip {
+        background: #f0f9ff;
+        border: 1px solid #e0f2fe;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    /* Hide Streamlit elements */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
+    /* Custom button styling */
+    .stButton > button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        transition: transform 0.2s ease;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
     </style>
+    """, unsafe_allow_html=True)
     
-    <div class="floating-particles">
-        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
-        <div class="particle" style="left: 20%; animation-delay: 1s;"></div>
-        <div class="particle" style="left: 30%; animation-delay: 2s;"></div>
-        <div class="particle" style="left: 40%; animation-delay: 3s;"></div>
-        <div class="particle" style="left: 50%; animation-delay: 4s;"></div>
-        <div class="particle" style="left: 60%; animation-delay: 5s;"></div>
-        <div class="particle" style="left: 70%; animation-delay: 2s;"></div>
-        <div class="particle" style="left: 80%; animation-delay: 3s;"></div>
-        <div class="particle" style="left: 90%; animation-delay: 1s;"></div>
-    </div>
-    
+    # Header
+    st.markdown("""
     <div class="main-header">
-        <h1 class="main-title">🚀 AI RESUME ANALYZER</h1>
-        <p class="subtitle">Next-Gen AI • Instant Analysis • Career Optimization</p>
+        <h1 class="main-title">AI Resume Analyzer</h1>
+        <p class="subtitle">Professional resume analysis powered by artificial intelligence</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Sidebar with cyberpunk styling
+    # Sidebar
     with st.sidebar:
-        st.markdown("""
-        <div class="tech-panel">
-            <h2 style="color: #00ffff; font-family: 'Orbitron', monospace; text-align: center; margin-bottom: 1rem;">
-                ⚡ NEURAL NETWORK TIPS
-            </h2>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("### Resume Optimization Guide")
         
         st.markdown("""
-        <div class="cyber-border">
-            <h3 style="color: #ff6b6b; font-family: 'Rajdhani', sans-serif; font-weight: 600;">🎯 OPTIMIZATION PROTOCOLS</h3>
-            <ul style="color: #ffffff; font-family: 'Rajdhani', sans-serif; line-height: 1.6;">
-                <li>Deploy <span style="color: #00ffff;">strong action verbs</span></li>
-                <li>Quantify all <span style="color: #ff6b6b;">achievements</span></li>
-                <li>Maintain <span style="color: #4ecdc4;">1-2 page limit</span></li>
-                <li>Customize for <span style="color: #ffa726;">target role</span></li>
-                <li>Execute final <span style="color: #ab47bc;">error scan</span></li>
+        <div class="sidebar-tip">
+            <h4>📋 Essential Sections</h4>
+            <ul>
+                <li>Contact Information</li>
+                <li>Professional Summary</li>
+                <li>Work Experience</li>
+                <li>Education</li>
+                <li>Skills & Competencies</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("""
-        <div class="cyber-border">
-            <h3 style="color: #4ecdc4; font-family: 'Rajdhani', sans-serif; font-weight: 600;">🔬 CRITICAL SECTIONS</h3>
-            <div style="color: #ffffff; font-family: 'Rajdhani', sans-serif;">
-                <p><span style="color: #00ffff;">◆</span> Contact Matrix</p>
-                <p><span style="color: #ff6b6b;">◆</span> Neural Summary</p>
-                <p><span style="color: #4ecdc4;">◆</span> Experience Data</p>
-                <p><span style="color: #ffa726;">◆</span> Education Log</p>
-                <p><span style="color: #ab47bc;">◆</span> Skill Database</p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # AI Status indicator
-        st.markdown("""
-        <div class="tech-panel" style="text-align: center; margin-top: 2rem;">
-            <p style="color: #00ffff; font-family: 'Orbitron', monospace; margin: 0;">AI STATUS</p>
-            <p style="color: #4ecdc4; font-family: 'Rajdhani', sans-serif; margin: 0; font-size: 1.1rem; font-weight: 600;">🟢 ONLINE & READY</p>
+        <div class="sidebar-tip">
+            <h4>✨ Best Practices</h4>
+            <ul>
+                <li>Use strong action verbs</li>
+                <li>Include quantifiable results</li>
+                <li>Tailor to job descriptions</li>
+                <li>Keep formatting consistent</li>
+                <li>Proofread thoroughly</li>
+            </ul>
         </div>
         """, unsafe_allow_html=True)
     
-    # Main upload section with cyber styling
+    # Upload section
     st.markdown("""
-    <div class="cyber-border">
-        <h2 style="text-align: center; color: #00ffff; font-family: 'Orbitron', monospace; margin-bottom: 1rem;">
-            📡 UPLOAD RESUME FOR ANALYSIS
-        </h2>
+    <div class="upload-section">
+        <h3 style="font-family: 'Inter', sans-serif; color: #1f2937; margin-bottom: 1rem;">Upload Your Resume</h3>
+        <p style="font-family: 'Inter', sans-serif; color: #6b7280; margin-bottom: 1.5rem;">
+            Upload your resume in PDF format for comprehensive AI analysis and personalized recommendations.
+        </p>
     </div>
     """, unsafe_allow_html=True)
     
     uploaded_file = st.file_uploader(
-        "Choose your resume (PDF format)", 
+        "Choose PDF file",
         type=['pdf'],
-        help="Upload a PDF version of your resume for AI analysis",
+        help="Upload a PDF version of your resume",
         label_visibility="collapsed"
     )
     
     if uploaded_file is not None:
         analyzer = ResumeAnalyzer()
         
-        # Cool loading animation
-        with st.spinner("🔍 AI NEURAL NETWORKS ANALYZING..."):
-            # Extract text
+        with st.spinner("Analyzing your resume..."):
             text = analyzer.extract_text_from_pdf(uploaded_file)
             
             if text:
-                # Perform all analyses
+                # Perform analysis
                 contact_score, contact_feedback = analyzer.analyze_contact_info(text)
                 sections_score, sections_feedback = analyzer.analyze_sections(text)
                 verbs_score, verbs_feedback = analyzer.analyze_action_verbs(text)
@@ -608,233 +576,176 @@ def main():
                 skills_score, skills_feedback = analyzer.analyze_skills(text)
                 format_score, format_feedback = analyzer.analyze_length_and_format(text)
                 
-                # Compile all scores
                 scores = {
                     'Contact Information': contact_score,
-                    'Sections': sections_score,
+                    'Resume Sections': sections_score,
                     'Action Verbs': verbs_score,
                     'Quantifiable Results': results_score,
-                    'Skills': skills_score,
+                    'Skills Assessment': skills_score,
                     'Format & Length': format_score
                 }
                 
                 overall_score, recommendations = analyzer.generate_overall_feedback(scores)
                 
-                # Display results with flashy styling
+                # Results header
                 st.markdown("""
-                <div class="cyber-border">
-                    <h1 style="text-align: center; color: #ff6b6b; font-family: 'Orbitron', monospace; margin-bottom: 2rem;">
-                        📊 ANALYSIS COMPLETE
-                    </h1>
+                <div class="analysis-section">
+                    <h2 class="section-title">Analysis Results</h2>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Overall score with epic styling
+                # Overall score
                 col1, col2, col3 = st.columns([1, 2, 1])
                 with col2:
-                    if overall_score >= 80:
-                        status_class = "status-excellent"
-                        status_text = "EXCELLENT"
-                        emoji = "🚀"
-                    elif overall_score >= 60:
-                        status_class = "status-good"
-                        status_text = "GOOD"
-                        emoji = "⚡"
+                    if overall_score >= 85:
+                        score_class = "score-excellent"
+                        badge_class = "badge-excellent"
+                        status_text = "Excellent"
+                    elif overall_score >= 70:
+                        score_class = "score-good"
+                        badge_class = "badge-good"
+                        status_text = "Good"
                     else:
-                        status_class = "status-poor"
-                        status_text = "NEEDS WORK"
-                        emoji = "🔧"
+                        score_class = "score-needs-work"
+                        badge_class = "badge-needs-work"
+                        status_text = "Needs Work"
                 
                     st.markdown(f"""
                     <div class="metric-card">
-                        <p style="color: #ffffff; font-family: 'Rajdhani', sans-serif; font-size: 1.2rem; margin: 0;">OVERALL SCORE</p>
-                        <p class="score-text">{overall_score:.0f}/100</p>
-                        <span class="{status_class}">{emoji} {status_text}</span>
+                        <h3 style="font-family: 'Inter', sans-serif; color: #6b7280; margin: 0; font-weight: 500;">Overall Score</h3>
+                        <div class="score-display {score_class}">{overall_score:.0f}/100</div>
+                        <span class="status-badge {badge_class}">{status_text}</span>
                     </div>
                     """, unsafe_allow_html=True)
                 
-                # Score breakdown with neon effects
+                # Score breakdown
                 st.markdown("""
-                <div class="tech-panel">
-                    <h2 style="color: #00ffff; font-family: 'Orbitron', monospace; text-align: center; margin-bottom: 1.5rem;">
-                        🎯 PERFORMANCE MATRIX
-                    </h2>
+                <div class="analysis-section">
+                    <h3 class="section-title">Detailed Breakdown</h3>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Create a DataFrame for better visualization
-                score_df = pd.DataFrame(list(scores.items()), columns=['Category', 'Score'])
-                
+                # Charts
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.markdown('<div class="cyber-border">', unsafe_allow_html=True)
-                    st.bar_chart(score_df.set_index('Category'))
+                    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+                    score_df = pd.DataFrame(list(scores.items()), columns=['Category', 'Score'])
+                    st.bar_chart(score_df.set_index('Category'), height=400)
                     st.markdown('</div>', unsafe_allow_html=True)
                 
                 with col2:
-                    st.markdown('<div class="tech-panel">', unsafe_allow_html=True)
+                    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+                    st.markdown("**Category Scores**")
                     for category, score in scores.items():
-                        if score >= 80:
-                            color = "#4ecdc4"
-                            icon = "🟢"
-                        elif score >= 60:
-                            color = "#ffa726"
-                            icon = "🟡"
+                        if score >= 85:
+                            color = "#10b981"
+                            status = "Excellent"
+                        elif score >= 70:
+                            color = "#f59e0b"
+                            status = "Good"
                         else:
-                            color = "#ff6b6b"
-                            icon = "🔴"
+                            color = "#ef4444"
+                            status = "Needs Work"
                         
                         st.markdown(f"""
-                        <p style="color: {color}; font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0;">
-                            {icon} {category}: {score:.0f}/100
-                        </p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f3f4f6;">
+                            <span style="font-family: 'Inter', sans-serif; font-weight: 500;">{category}</span>
+                            <span style="color: {color}; font-weight: 600;">{score:.0f}/100</span>
+                        </div>
                         """, unsafe_allow_html=True)
                     st.markdown('</div>', unsafe_allow_html=True)
                 
-                # Detailed feedback with cyber panels
+                # Detailed feedback
                 st.markdown("""
-                <div class="tech-panel">
-                    <h2 style="color: #ff6b6b; font-family: 'Orbitron', monospace; text-align: center; margin-bottom: 1.5rem;">
-                        🔬 DETAILED ANALYSIS
-                    </h2>
+                <div class="analysis-section">
+                    <h3 class="section-title">Detailed Analysis</h3>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 categories_feedback = [
                     ("Contact Information", contact_feedback),
-                    ("Sections", sections_feedback),
+                    ("Resume Sections", sections_feedback),
                     ("Action Verbs", verbs_feedback),
                     ("Quantifiable Results", results_feedback),
-                    ("Skills", skills_feedback),
+                    ("Skills Assessment", skills_feedback),
                     ("Format & Length", format_feedback)
                 ]
                 
                 for category, feedback in categories_feedback:
-                    score = scores[category]
-                    if score >= 80:
-                        border_color = "#4ecdc4"
-                        glow_color = "rgba(78,205,196,0.3)"
-                    elif score >= 60:
-                        border_color = "#ffa726"
-                        glow_color = "rgba(255,167,38,0.3)"
-                    else:
-                        border_color = "#ff6b6b"
-                        glow_color = "rgba(255,107,107,0.3)"
-                    
-                    with st.expander(f"🔍 {category} - {score:.0f}/100", expanded=False):
-                        st.markdown(f"""
-                        <div style="border: 2px solid {border_color}; border-radius: 10px; padding: 1rem; 
-                                    background: linear-gradient(145deg, rgba(0,0,0,0.3), rgba(255,255,255,0.05));
-                                    box-shadow: 0 0 15px {glow_color};">
-                        """, unsafe_allow_html=True)
-                        
+                    with st.expander(f"{category} - {scores[category]:.0f}/100"):
                         for item in feedback:
-                            if "✅" in item:
-                                st.success(item)
-                            elif "⚠️" in item:
-                                st.warning(item)
-                            elif "❌" in item:
-                                st.error(item)
+                            if item.startswith("✓") or "excellent" in item.lower() or "good" in item.lower() and "limited" not in item.lower():
+                                feedback_class = "feedback-positive"
+                            elif item.startswith("✗") or "missing" in item.lower() or "limited" in item.lower():
+                                feedback_class = "feedback-negative"
                             else:
-                                st.info(item)
-                        
-                        st.markdown("</div>", unsafe_allow_html=True)
+                                feedback_class = "feedback-neutral"
+                            
+                            st.markdown(f"""
+                            <div class="feedback-item {feedback_class}">
+                                {item}
+                            </div>
+                            """, unsafe_allow_html=True)
                 
-                # AI Recommendations with epic styling
+                # Recommendations
                 st.markdown("""
-                <div class="cyber-border">
-                    <h2 style="color: #00ffff; font-family: 'Orbitron', monospace; text-align: center; margin-bottom: 1.5rem;">
-                        🤖 AI RECOMMENDATIONS
-                    </h2>
+                <div class="analysis-section">
+                    <h3 class="section-title">Recommendations</h3>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                for i, rec in enumerate(recommendations):
-                    if "🎉" in rec:
-                        st.balloons()
-                        st.success(rec)
-                    elif "👍" in rec:
-                        st.info(rec)
-                    elif "⚠️" in rec:
-                        st.warning(rec)
-                    else:
-                        st.markdown(f"""
-                        <div class="tech-panel">
-                            <p style="color: #ffffff; font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; margin: 0;">
-                                {rec}
-                            </p>
-                        </div>
-                        """, unsafe_allow_html=True)
+                for rec in recommendations:
+                    st.markdown(f"""
+                    <div class="recommendation-card">
+                        {rec}
+                    </div>
+                    """, unsafe_allow_html=True)
                 
-                # Epic download button
-                st.markdown("""
-                <div class="cyber-border" style="text-align: center; margin-top: 2rem;">
-                    <h3 style="color: #ff6b6b; font-family: 'Orbitron', monospace; margin-bottom: 1rem;">
-                        📡 EXPORT ANALYSIS
-                    </h3>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Export results with cyber styling
-                if st.button("🚀 DOWNLOAD COMPLETE ANALYSIS", use_container_width=True):
+                # Download report
+                if st.button("Download Analysis Report", use_container_width=True):
                     report = f"""
-=== AI RESUME ANALYSIS REPORT ===
+RESUME ANALYSIS REPORT
 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-AI System: Neural Resume Analyzer v2.0
 
-OVERALL PERFORMANCE: {overall_score:.0f}/100
+OVERALL SCORE: {overall_score:.0f}/100
 
-PERFORMANCE MATRIX:
+DETAILED SCORES:
 {chr(10).join([f"• {cat}: {score:.0f}/100" for cat, score in scores.items()])}
 
-AI RECOMMENDATIONS:
+RECOMMENDATIONS:
 {chr(10).join([f"• {rec}" for rec in recommendations])}
 
-DETAILED ANALYSIS:
+DETAILED FEEDBACK:
 {chr(10).join([f"{chr(10)}{cat.upper()}:{chr(10)}{chr(10).join([f"  - {item}" for item in feedback])}{chr(10)}" for cat, feedback in categories_feedback])}
-
---- END REPORT ---
                     """
                     
                     st.download_button(
-                        label="⬇️ Download Report",
+                        label="📄 Download Report",
                         data=report,
-                        file_name=f"AI_Resume_Analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                        mime="text/plain",
-                        use_container_width=True
+                        file_name=f"resume_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                        mime="text/plain"
                     )
             else:
-                st.error("❌ Could not extract text from the PDF. Please ensure the file is not corrupted.")
+                st.error("Unable to extract text from the PDF. Please ensure the file is not corrupted or password-protected.")
     
     else:
-        # Landing page with cyber effects
+        # Demo preview
         st.markdown("""
-        <div class="upload-zone">
-            <h2 style="color: #00ffff; font-family: 'Orbitron', monospace; text-align: center; margin-bottom: 1rem;">
-                🎯 DRAG & DROP YOUR RESUME
-            </h2>
-            <p style="color: #ffffff; font-family: 'Rajdhani', sans-serif; font-size: 1.2rem; text-align: center;">
-                AI-powered analysis • Instant feedback • Career optimization
+        <div class="analysis-section">
+            <h3 class="section-title">Sample Analysis Preview</h3>
+            <p style="font-family: 'Inter', sans-serif; color: #6b7280; margin-bottom: 1.5rem;">
+                See how your resume will be analyzed across key categories that employers value most.
             </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Demo visualization
-        st.markdown("""
-        <div class="tech-panel">
-            <h2 style="color: #ff6b6b; font-family: 'Orbitron', monospace; text-align: center; margin-bottom: 1.5rem;">
-                📊 DEMO ANALYSIS PREVIEW
-            </h2>
         </div>
         """, unsafe_allow_html=True)
         
         sample_scores = {
             'Contact Information': 85,
-            'Sections': 90,
+            'Resume Sections': 90,
             'Action Verbs': 70,
             'Quantifiable Results': 60,
-            'Skills': 80,
+            'Skills Assessment': 80,
             'Format & Length': 85
         }
         
@@ -842,35 +753,6 @@ DETAILED ANALYSIS:
         
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown('<div class="cyber-border">', unsafe_allow_html=True)
-            st.bar_chart(sample_df.set_index('Category'))
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown('<div class="tech-panel">', unsafe_allow_html=True)
-            st.markdown("""
-            <p style="color: #4ecdc4; font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 600;">
-                🟢 Contact Information: 85/100<br>
-                🟢 Sections: 90/100<br>
-                🟡 Action Verbs: 70/100<br>
-                🔴 Quantifiable Results: 60/100<br>
-                🟢 Skills: 80/100<br>
-                🟢 Format & Length: 85/100
-            </p>
-            """, unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Footer with additional cyber elements
-        st.markdown("""
-        <div class="tech-panel" style="margin-top: 3rem; text-align: center;">
-            <p style="color: #00ffff; font-family: 'Orbitron', monospace; font-size: 1.2rem; margin: 0;">
-                ⚡ POWERED BY ADVANCED AI ⚡
-            </p>
-            <p style="color: #ffffff; font-family: 'Rajdhani', sans-serif; margin: 0.5rem 0 0 0;">
-                Neural networks • Machine learning • Career optimization algorithms
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    main()
+            st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+            st.bar_chart(sample_df.set_index('Category'), height=300)
+            st.markdown('
