@@ -802,3 +802,6 @@ def main():
             font-size: 2rem;
         }
     }
+    
+    </style>
+    """, unsafe_allow_html=True)
