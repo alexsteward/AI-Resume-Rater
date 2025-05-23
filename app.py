@@ -575,7 +575,11 @@ def main():
             "🚀 Projects",
             "📄 Generate Resume",
             "💖 Support Us"
-        ])
+        ], index=0)
+        
+        # Update session state if page changed
+        if page != st.session_state.get('current_page'):
+            st.session_state.current_page = page
         
         st.markdown("---")
         st.markdown("### 📊 Resume Completeness")
@@ -1148,7 +1152,7 @@ def show_support():
         with col_coffee:
             st.markdown("""
             <div class="metric-card">
-                <h4>☕ Buy me a coffee</h4>
+                <h4>Coffee Support</h4>
                 <h3>$5</h3>
                 <p>Perfect for a quick thank you!</p>
             </div>
@@ -1161,7 +1165,7 @@ def show_support():
         with col_meal:
             st.markdown("""
             <div class="metric-card">
-                <h4>🍕 Buy me lunch</h4>
+                <h4>Lunch Support</h4>
                 <h3>$15</h3>
                 <p>Fuel for more features!</p>
             </div>
@@ -1174,7 +1178,7 @@ def show_support():
         with col_month:
             st.markdown("""
             <div class="metric-card">
-                <h4>🚀 Monthly Support</h4>
+                <h4>Monthly Support</h4>
                 <h3>$25</h3>
                 <p>Ongoing development support!</p>
             </div>
