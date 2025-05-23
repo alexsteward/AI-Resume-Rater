@@ -558,23 +558,23 @@ def main():
     # Header
     st.markdown("""
     <div class="main-header">
-        <h1>🚀 AI Resume Builder Pro</h1>
+        <h1>AI Resume Builder Pro</h1>
         <p>Create professional resumes with AI-powered suggestions and beautiful visualizations</p>
     </div>
     """, unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
-        st.markdown("### 📋 Navigation")
+        st.markdown("### Navigation")
         page = st.selectbox("Choose a section:", [
-            "🏠 Dashboard",
-            "👤 Personal Info", 
-            "💼 Experience",
-            "🎓 Education",
-            "🛠️ Skills",
-            "🚀 Projects",
-            "📄 Generate Resume",
-            "💖 Support Us"
+            "Dashboard",
+            "Personal Info", 
+            "Experience",
+            "Education",
+            "Skills",
+            "Projects",
+            "Generate Resume",
+            "Support Us"
         ], index=0)
         
         # Update session state if page changed
@@ -582,7 +582,7 @@ def main():
             st.session_state.current_page = page
         
         st.markdown("---")
-        st.markdown("### 📊 Resume Completeness")
+        st.markdown("### Resume Completeness")
         
         # Calculate completeness
         completeness = 0
@@ -606,7 +606,7 @@ def main():
         st.write(f"**{int(progress * 100)}%** Complete")
         
         # Quick stats
-        st.markdown("### 📈 Quick Stats")
+        st.markdown("### Quick Stats")
         col1, col2 = st.columns(2)
         with col1:
             st.metric("Experience", len(st.session_state.resume_data['experience']))
@@ -616,21 +616,21 @@ def main():
             st.metric("Education", len(st.session_state.resume_data['education']))
 
     # Main content based on selected page
-    if page == "🏠 Dashboard":
+    if page == "Dashboard":
         show_dashboard()
-    elif page == "👤 Personal Info":
+    elif page == "Personal Info":
         show_personal_info()
-    elif page == "💼 Experience":
+    elif page == "Experience":
         show_experience()
-    elif page == "🎓 Education":
+    elif page == "Education":
         show_education()
-    elif page == "🛠️ Skills":
+    elif page == "Skills":
         show_skills()
-    elif page == "🚀 Projects":
+    elif page == "Projects":
         show_projects()
-    elif page == "📄 Generate Resume":
+    elif page == "Generate Resume":
         show_generate_resume()
-    elif page == "💖 Support Us":
+    elif page == "Support Us":
         show_support()
 
 def show_dashboard():
@@ -1188,52 +1188,52 @@ def show_support():
                 st.success("💰 Send $25 to @xarminth on Venmo!")
                 st.markdown("**[Open Venmo: @xarminth](https://account.venmo.com/u/xarminth)**")
         
-        st.markdown("### 🎯 How Your Support Helps")
+        st.markdown("### How Your Support Helps")
         st.markdown("""
-        - 🤖 **AI Features**: Improve resume analysis and suggestions
-        - 📊 **More Templates**: Add professional resume designs
-        - 🔄 **PDF Export**: Enable high-quality PDF generation
-        - 🌐 **GitHub Integration**: Direct save to GitHub repositories
-        - 📧 **Email Templates**: Cover letter generation
-        - 🔍 **ATS Optimization**: Applicant Tracking System compatibility
+        - **AI Features**: Improve resume analysis and suggestions
+        - **More Templates**: Add professional resume designs
+        - **PDF Export**: Enable high-quality PDF generation
+        - **GitHub Integration**: Direct save to GitHub repositories
+        - **Email Templates**: Cover letter generation
+        - **ATS Optimization**: Applicant Tracking System compatibility
         """)
     
     with col2:
-        st.markdown("### ⭐ Rate Our App")
+        st.markdown("### Rate Our App")
         
         rating = st.select_slider(
             "How would you rate AI Resume Builder Pro?",
             options=[1, 2, 3, 4, 5],
             value=5,
-            format_func=lambda x: "⭐" * x
+            format_func=lambda x: "★" * x
         )
         
         feedback = st.text_area("Leave your feedback (optional)", height=100)
         
-        if st.button("📤 Submit Feedback", type="primary"):
-            st.success(f"🙏 Thank you for your {rating}-star rating!")
+        if st.button("Submit Feedback", type="primary"):
+            st.success(f"Thank you for your {rating}-star rating!")
             if feedback:
-                st.success("💬 Your feedback has been recorded!")
+                st.success("Your feedback has been recorded!")
         
-        st.markdown("### 📊 App Statistics")
+        st.markdown("### App Statistics")
         
         # Simulated stats
-        st.metric("🎯 Resumes Created", "2,847", "↗️ +127 this week")
-        st.metric("👥 Active Users", "1,234", "↗️ +89 this week")
-        st.metric("⭐ Average Rating", "4.8/5", "📈 +0.2 this month")
+        st.metric("Resumes Created", "2,847", "↗ +127 this week")
+        st.metric("Active Users", "1,234", "↗ +89 this week")
+        st.metric("Average Rating", "4.8/5", "↗ +0.2 this month")
         
-        st.markdown("### 🔗 Connect With Us")
+        st.markdown("### Connect With Us")
         
         st.markdown("""
-        - 🐙 [GitHub Repository](https://github.com/yourusername/ai-resume-builder)
-        - 🐦 [Follow on Twitter](https://twitter.com/yourusername)
-        - 💼 [LinkedIn](https://linkedin.com/in/yourusername)
-        - 📧 [Email Support](mailto:support@resumebuilder.com)
+        - [GitHub Repository](https://github.com/yourusername/ai-resume-builder)
+        - [Follow on Twitter](https://twitter.com/yourusername)
+        - [LinkedIn](https://linkedin.com/in/yourusername)
+        - [Email Support](mailto:support@resumebuilder.com)
         """)
         
         # Version info
         st.markdown("---")
-        st.caption("🔖 Version 1.0.0 | Built with ❤️ using Streamlit")
+        st.caption("Version 1.0.0 | Built with love using Streamlit")
 
 # Import/Export functionality
 def show_import_export():
@@ -1301,12 +1301,12 @@ def show_footer():
     st.markdown("---")
     st.markdown("""
     <div style="text-align: center; padding: 2rem; color: #666;">
-        <p>🚀 <strong>AI Resume Builder Pro</strong> | Built with Streamlit & ❤️</p>
+        <p><strong>AI Resume Builder Pro</strong> | Built with Streamlit</p>
         <p style="font-size: 0.9em;">
             Open Source • Free Forever • Privacy Focused<br>
-            <a href="https://github.com/yourusername/ai-resume-builder" target="_blank">⭐ Star us on GitHub</a> | 
-            <a href="mailto:support@resumebuilder.com">📧 Support</a> | 
-            <a href="#" onclick="window.open('https://twitter.com/intent/tweet?text=Check out this amazing AI Resume Builder! 🚀', '_blank')">🐦 Share</a>
+            <a href="https://github.com/yourusername/ai-resume-builder" target="_blank">Star us on GitHub</a> | 
+            <a href="mailto:support@resumebuilder.com">Support</a> | 
+            <a href="#" onclick="window.open('https://twitter.com/intent/tweet?text=Check out this amazing AI Resume Builder!', '_blank')">Share</a>
         </p>
     </div>
     """, unsafe_allow_html=True)
